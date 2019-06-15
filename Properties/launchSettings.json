@@ -20,7 +20,7 @@
     "TypedHttpClientFactory": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "rest/localexchangerates/base/usd",
+      "launchUrl": "rest/localexchangerates/rate/USD",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

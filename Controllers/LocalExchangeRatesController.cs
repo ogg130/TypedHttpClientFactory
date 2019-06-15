@@ -1,62 +1,33 @@
-﻿using System.IO;
-using System.Net.Http;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using TypedHttpClientFactory.Data.Models;
 using TypedHttpClientFactory.Services;
 
 namespace TypedHttpClientFactory.Controllers
 {
-    
+
     [Route("rest/[controller]/")]
     [ApiController]
     public class LocalExchangeRatesController : ControllerBase
     {
 
-        private readonly ITypedHttpClientService _typedHttpClientService;
+        //Create a private readonly property using the service interface to
+        //inject into the controller for use using dependency injection
+        private readonly ILocalExchangeRatesService _localExchangeRatesService;
 
-        //Inject typed httpclient service using dependency injection
-        public LocalExchangeRatesController(ITypedHttpClientService typedHttpClientService)
+        //Use constructor injection to make the service's methods available to your class
+        public LocalExchangeRatesController(ILocalExchangeRatesService localExchangeRatesService)
         {
-            _typedHttpClientService = typedHttpClientService;
+            _localExchangeRatesService = localExchangeRatesService;
         }
 
-        // GET latest available exchange rates in the base currency type of a users choice
-        [HttpGet("base/{baseCurrencyId}")]
-        public async Task<IActionResult> GetComic(string baseCurrencyId)
+        // Make an HTTP GET call to an API to get the latest available exchange rates in the base 
+        // currency type of a users choice in JSON format, make changes to the data that was recieved
+        // and return the modified data as a JSON data sctructure.
+        [HttpGet("rate/{baseCurrencyId}")]
+        public async Task<IActionResult> GetRateAsync(string baseCurrencyId)
         {
-            var uri = $"latest?base={baseCurrencyId}";
-            HttpResponseMessage response = await _typedHttpClientService.Client.GetAsync(uri);
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                return NotFound($"Failure: {response.StatusCode} / {response.Content}");
-            }
-
-            var responseString = response.Content.ReadAsStringAsync().Result;
-
-            var responseJson = JObject.Parse(responseString);
-
-            var rootObject = JsonConvert.DeserializeObject<RootObject>(responseJson.ToString());
-
-            //The _base field comes over without a value. Populate the baseCurrencyId that is 
-            //passed into the controller method
-            rootObject.basecurrency = baseCurrencyId;
-
-            var processedString = JsonConvert.SerializeObject(rootObject);
-
-            var processedJson = JObject.Parse(processedString);
-
-            //Create a textfile containing the json response
-            var logPath = System.IO.Path.GetTempFileName();
-            var logWriter = System.IO.File.CreateText(logPath);
-            logWriter.WriteLine(processedJson);
-            logWriter.Dispose();
-
-            return Ok(processedJson);
+            //Use the injected service - call the GetRateAsyc method
+            return await _localExchangeRatesService.GetRateAsync(baseCurrencyId);
         }
     }
-
 }
